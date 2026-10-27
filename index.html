@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0F0F1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>AIBC Quiz — NOVA IMS</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0F0F1A;--surface:#1A1A2E;--s2:#22223A;--s3:#2A2A45;
+  --b:rgba(255,255,255,.09);--b2:rgba(255,255,255,.16);
+  --text:#F0F0F8;--muted:#8A8AB0;--muted2:#5A5A80;
+  --accent:#7F77DD;--asoft:#2A2845;--adim:#4A4490;
+  --green:#4CAF7D;--gsoft:#0D2B1A;--gborder:rgba(76,175,125,.3);
+  --red:#E05C6A;--rsoft:#2B0D12;--rborder:rgba(224,92,106,.3);
+  --amber:#F0A840;--amsoft:#2B1D00;--amborder:rgba(240,168,64,.3);
+  --r:14px;--rs:8px;--font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.5;overflow-x:hidden}
+#app{max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+button{font-family:var(--font);cursor:pointer;border:none;background:none;color:inherit}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+
+/* ── Global tab bar ── */
+.tabbar{display:flex;background:var(--surface);border-bottom:1px solid var(--b);flex-shrink:0;position:sticky;top:0;z-index:50}
+.tbb{flex:1;padding:13px 4px;font-size:12px;font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;letter-spacing:.02em}
+.tbb.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab{display:none;flex:1;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.tab.active{display:flex}
+
+/* ── Typography ── */
+.label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted);font-size:13px}
+
+/* ── Buttons ── */
+.btn{width:100%;padding:15px;font-size:15px;font-weight:600;border-radius:var(--r);transition:opacity .15s,transform .1s;text-align:center}
+.btn:active{opacity:.85;transform:scale(.98)}
+.btn-acc{background:var(--accent);color:#fff}
+.btn-ghost{border:1px solid var(--b2);color:var(--text);background:transparent}
+.btn-ghost:active{background:var(--s2)}
+.btn-sm{padding:10px 14px;font-size:13px;font-weight:600;border-radius:var(--rs)}
+.btn-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--s2);border:1px solid var(--b);flex-shrink:0}
+
+/* ── Screens within quiz tab ── */
+.screen{display:none;flex-direction:column;flex:1;padding:18px 16px 36px}
+.screen.active{display:flex}
+
+/* ══════════════ QUESTIONS TAB ══════════════ */
+/* Home */
+.home-badge{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.home-title{font-size:26px;font-weight:800;letter-spacing:-.8px;line-height:1.1;margin-bottom:5px}
+.home-sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.stat-box{background:var(--surface);border:1px solid var(--b);border-radius:var(--rs);padding:11px 6px;text-align:center}
+.stat-n{font-size:20px;font-weight:700;color:var(--accent)}
+.stat-l{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* Mode selector */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.mc{background:var(--surface);border:1px solid var(--b);border-radius:var(--r);padding:13px 12px;cursor:pointer;text-align:left;transition:border-color .15s,background .15s}
+.mc:active{background:var(--s2)}.mc.sel{border-color:var(--accent);background:var(--asoft)}
+.mc-icon{font-size:18px;margin-bottom:5px}.mc-name{font-size:13px;font-weight:600;color:var(--text)}
+.mc-desc{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* Type toggle (learning vs quiz) */
+.type-toggle{display:flex;background:var(--s2);border-radius:var(--rs);padding:3px;margin-bottom:14px;gap:3px}
+.tt-btn{flex:1;padding:9px 6px;font-size:13px;font-weight:600;border-radius:6px;color:var(--muted);transition:all .15s;text-align:center}
+.tt-btn.sel{background:var(--accent);color:#fff}
+
+/* Difficulty pills */
+.diff-row{display:flex;gap:6px;margin-bottom:14px}
+.dp{flex:1;padding:9px 4px;font-size:12px;font-weight:600;border:1px solid var(--b2);border-radius:var(--rs);color:var(--muted);cursor:pointer;text-align:center;transition:all .15s}
+.dp.sel-all{border-color:var(--accent);background:var(--asoft);color:var(--accent)}
+.dp.sel-easy{border-color:var(--green);background:var(--gsoft);color:var(--green)}
+.dp.sel-med{border-color:var(--amber);background:var(--amsoft);color:var(--amber)}
+.dp.sel-hard{border-color:var(--red);background:var(--rsoft);color:var(--red)}
+
+/* Section pills */
+.spills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.spill{padding:5px 11px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid var(--b2);color:var(--muted);cursor:pointer;transition:all .15s}
+.spill.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* Progress tracker */
+.prog-section{margin-top:20px}
+.ps-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.ps-item{background:var(--surface);border:1px solid var(--b);border-radius:var(--rs);padding:12px 14px;margin-bottom:7px}
+.ps-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.ps-name{font-size:13px;font-weight:600}
+.ps-pct{font-size:13px;font-weight:700}
+.ps-bar{height:5px;background:var(--s2);border-radius:3px;overflow:hidden}
+.ps-fill{height:100%;border-radius:3px;transition:width .5s}
+.ps-meta{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* Quiz screen */
+.quiz-top{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.prog-track{flex:1;height:4px;background:var(--s2);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s}
+.qcount{font-size:13px;color:var(--muted);font-weight:500;white-space:nowrap}
+.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:13px}
+.hbox{background:var(--surface);border:1px solid var(--b);border-radius:var(--rs);padding:9px 4px;text-align:center}
+.hbox-n{font-size:17px;font-weight:700}
+.hbox-l{font-size:9px;color:var(--muted);margin-top:1px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.q-meta{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.chip{font-size:10px;font-weight:600;padding:3px 8px;border-radius:999px}
+.chip-easy{background:var(--gsoft);color:var(--green)}
+.chip-med{background:var(--amsoft);color:var(--amber)}
+.chip-hard{background:var(--rsoft);color:var(--red)}
+.chip-type{background:var(--asoft);color:var(--accent)}
+.chip-sec{background:var(--s2);color:var(--muted)}
+.chip-learn{background:rgba(240,168,64,.15);color:var(--amber)}
+.q-card{background:var(--surface);border:1px solid var(--b);border-radius:var(--r);padding:16px;margin-bottom:13px}
+.q-text{font-size:15px;line-height:1.55;font-weight:500}
+.opts{display:flex;flex-direction:column;gap:7px;margin-bottom:13px}
+.opt{width:100%;text-align:left;padding:13px 15px;border:1px solid var(--b2);border-radius:var(--rs);background:var(--surface);font-size:14px;line-height:1.4;color:var(--text);transition:all .12s;font-family:var(--font)}
+.opt:active{background:var(--s2)}.opt.selected{border-color:var(--accent);background:var(--asoft)}
+.opt.correct{border-color:var(--green);background:var(--gsoft);color:var(--green)}
+.opt.wrong{border-color:var(--red);background:var(--rsoft);color:var(--red)}
+.opt.disabled{pointer-events:none}
+.tf-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
+.tf-btn{padding:18px 8px;font-size:16px;font-weight:700;border:1px solid var(--b2);border-radius:var(--r);background:var(--surface);color:var(--text);transition:all .12s}
+.tf-btn:active{background:var(--s2)}.tf-btn.correct{border-color:var(--green);background:var(--gsoft);color:var(--green)}
+.tf-btn.wrong{border-color:var(--red);background:var(--rsoft);color:var(--red)}.tf-btn.disabled{pointer-events:none}
+.mhint{font-size:12px;color:var(--muted);padding:7px 11px;background:var(--s2);border-radius:var(--rs);margin-bottom:7px}
+
+/* Explanation box - new rich format */
+.exp-box{border-radius:var(--rs);margin-bottom:12px;overflow:hidden;border:1px solid var(--b)}
+.exp-verdict{padding:12px 14px;font-size:14px;font-weight:700}
+.exp-verdict.ok{background:var(--gsoft);color:var(--green)}
+.exp-verdict.bad{background:var(--rsoft);color:var(--red)}
+.exp-concept{padding:12px 14px;background:var(--s2);border-top:1px solid var(--b)}
+.exp-concept-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.exp-concept-text{font-size:13px;color:var(--text);line-height:1.55}
+.exp-answer{padding:12px 14px;background:var(--surface);border-top:1px solid var(--b)}
+.exp-answer-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--green);margin-bottom:4px}
+.exp-answer-text{font-size:13px;color:#a0e8c0;line-height:1.55}
+.exp-options{padding:12px 14px;background:var(--s3);border-top:1px solid var(--b)}
+.exp-options-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.exp-opt-row{display:flex;gap:8px;margin-bottom:6px;font-size:12px;line-height:1.5}
+.exp-opt-row:last-child{margin-bottom:0}
+.exp-opt-badge{font-size:11px;font-weight:700;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.exp-ok-badge{background:var(--gsoft);color:var(--green)}
+.exp-bad-badge{background:var(--rsoft);color:var(--red)}
+.exp-neu-badge{background:var(--s2);color:var(--muted)}
+.exp-opt-text{color:var(--muted);line-height:1.5}
+
+/* Results */
+.results-hero{background:var(--surface);border:1px solid var(--b);border-radius:var(--r);padding:22px 16px;text-align:center;margin-bottom:13px}
+.r-grade{font-size:60px;font-weight:800;color:var(--accent);line-height:1;letter-spacing:-2px}
+.r-sub{font-size:13px;color:var(--muted);margin-top:6px}
+.r-msg{font-size:14px;font-weight:600;color:var(--text);margin-top:8px}
+.r-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px}
+.r-box{background:var(--surface);border:1px solid var(--b);border-radius:var(--rs);padding:13px 7px;text-align:center}
+.r-n{font-size:20px;font-weight:700}.r-l{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+
+/* Chapter report */
+.cr-item{background:var(--surface);border:1px solid var(--b);border-radius:var(--r);padding:13px;margin-bottom:7px}
+.cr-need{border-color:var(--red);border-left:3px solid var(--red)}
+.cr-ok{border-color:var(--gborder)}
+.cr-title{font-size:13px;font-weight:700}
+.cr-meta{font-size:11px;color:var(--muted);margin-bottom:5px}
+.cr-bar-wrap{height:5px;background:var(--s2);border-radius:3px;overflow:hidden;margin-bottom:3px}
+.cr-bar{height:100%;border-radius:3px;transition:width .6s}
+.study-btn{margin-top:10px;width:100%;padding:10px;font-size:13px;font-weight:600;background:var(--accent);color:#fff;border-radius:var(--rs);border:none;cursor:pointer}
+
+/* Review list */
+.rev-item{border:1px solid var(--b);border-radius:var(--rs);margin-bottom:6px;overflow:hidden}
+.rev-head{padding:11px 13px;cursor:pointer;display:flex;align-items:flex-start;gap:9px;background:var(--surface)}
+.r-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.ri-ok{background:var(--gsoft);color:var(--green)}.ri-bad{background:var(--rsoft);color:var(--red)}
+.r-qtext{font-size:12px;line-height:1.4;flex:1}
+.rev-body{display:none;padding:11px 13px;background:var(--s2);border-top:1px solid var(--b);font-size:12px;color:var(--muted);line-height:1.6}
+.rev-body.open{display:block}
+.rev-correct{font-weight:600;color:var(--green);margin-bottom:3px}
+.rev-yours{color:var(--red);margin-bottom:3px}
+
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}
+.gap{height:10px}.gapl{height:18px}
+
+/* ══════════════ CHEAT SHEET TAB ══════════════ */
+.cs-wrap{padding:16px 16px 40px}
+
+/* Chapter switcher */
+.ch-switcher{display:flex;overflow-x:auto;gap:6px;padding-bottom:2px;margin-bottom:16px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.ch-switcher::-webkit-scrollbar{display:none}
+.ch-btn{padding:7px 14px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--b2);color:var(--muted);white-space:nowrap;cursor:pointer;flex-shrink:0;transition:all .15s;background:var(--surface)}
+.ch-btn.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* Cheat sheet cards */
+.cs-section{margin-bottom:20px}
+.cs-sec-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.cs-card{background:var(--surface);border:1px solid var(--b);border-radius:var(--r);padding:13px;margin-bottom:7px}
+.cs-card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px}
+.cs-bullets{list-style:none}
+.cs-bullets li{font-size:12px;color:var(--muted);line-height:1.6;padding:3px 0;padding-left:14px;position:relative;border-bottom:1px solid var(--b)}
+.cs-bullets li:last-child{border-bottom:none}
+.cs-bullets li::before{content:"·";position:absolute;left:0;color:var(--accent);font-weight:700}
+.cs-bullets li strong{color:var(--text);font-weight:600}
+
+/* Acronym cards */
+.acro-card{background:var(--surface);border:1px solid var(--b);border-radius:var(--rs);padding:11px 13px;margin-bottom:7px;display:flex;gap:11px}
+.acro-abbr{font-size:14px;font-weight:800;color:var(--accent);min-width:50px;flex-shrink:0;letter-spacing:-.3px}
+.acro-full{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.acro-def{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* ══════════════ SUMMARY TAB ══════════════ */
+.sum-wrap{padding:16px 16px 40px}
+.sum-card{background:var(--surface);border:1px solid var(--b);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.sum-session{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.sum-title{font-size:15px;font-weight:700;margin-bottom:10px}
+.sum-point{margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid var(--b)}
+.sum-point:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.sum-pt{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.sum-pb{font-size:12px;color:var(--muted);line-height:1.55}
+
+/* ══════════════ OVERLAY ══════════════ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.overlay.show{display:flex}
+.overlay-box{background:var(--surface);border:1px solid var(--b2);border-radius:var(--r);padding:22px 18px;width:100%;max-width:320px;text-align:center}
+.overlay-box h3{margin-bottom:7px}.overlay-box p{color:var(--muted);font-size:13px;margin-bottom:18px}
+.ov-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.toast{position:fixed;top:22px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:13px;font-weight:600;padding:9px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:200;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* ── Writing tab ── */
+.wr-wrap{padding:16px 16px 40px}
+.wr-item{background:var(--surface);border:1px solid var(--b);border-radius:var(--r);margin-bottom:9px;overflow:hidden}
+.wr-head{padding:14px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.wr-num{font-size:12px;font-weight:800;color:var(--accent);min-width:22px;margin-top:2px}
+.wr-title{font-size:14px;font-weight:700;line-height:1.35}
+.wr-meta{font-size:11px;color:var(--muted);margin-top:3px}
+.wr-body{display:none;padding:0 14px 14px;border-top:1px solid var(--b)}
+.wr-body.open{display:block}
+.wr-prompt{font-size:13px;color:var(--text);margin:12px 0;padding:10px 12px;background:var(--s2);border-radius:var(--rs);line-height:1.55}
+.wr-h{font-size:12px;font-weight:700;color:var(--accent);margin:12px 0 4px}
+.wr-body ul{list-style:none}
+.wr-body li{font-size:12px;color:var(--muted);line-height:1.6;padding-left:14px;position:relative;margin-bottom:3px}
+.wr-body li::before{content:"·";position:absolute;left:0;color:var(--accent);font-weight:700}
+.wr-terms{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.wr-term{font-size:10px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--asoft);color:var(--accent)}
+.wr-tip{margin-top:12px;font-size:12px;color:var(--amber);background:var(--amsoft);border:1px solid var(--amborder);border-radius:var(--rs);padding:9px 11px;line-height:1.5}
+.fx-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}
+.fx-table th,.fx-table td{border-bottom:1px solid var(--b);padding:7px 5px;text-align:left;vertical-align:top;line-height:1.45;color:var(--muted)}
+.fx-table th{color:var(--text);font-weight:700}
+.fx-table td:first-child{color:var(--accent);font-weight:800}
+.exp-opts-list{padding:12px 14px;background:var(--s3);border-top:1px solid var(--b)}
+
+</style>
+</head>
+<body>
+<div id="app">
+<h1 class="sr-only">AI Business Case (AIBC) Exam Study Quiz — NOVA IMS</h1>
+
+<div class="tabbar">
+  <button class="tbb active" onclick="switchTab('tab-q',this)">Questions</button>
+  <button class="tbb" onclick="switchTab('tab-cs',this)">Cheat Sheet</button>
+  <button class="tbb" onclick="switchTab('tab-sum',this)">Summary</button>
+  <button class="tbb" onclick="switchTab('tab-wr',this)">Writing</button>
+</div>
+
+<div class="tab active" id="tab-q">
+  <div class="screen active" id="home">
+    <div class="home-badge">NOVA IMS · PGAI4DT · Pedro Ruivo &amp; Lara Marques</div>
+    <div class="home-title">AI Business Case</div>
+    <div class="home-sub" id="home-sub"></div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-n" id="home-total">0</div><div class="stat-l">Questions</div></div>
+      <div class="stat-box"><div class="stat-n" id="home-secs">0</div><div class="stat-l">Chapters</div></div>
+      <div class="stat-box"><div class="stat-n" id="home-done">0</div><div class="stat-l">Answered</div></div>
+    </div>
+
+    <div class="label" style="margin-bottom:8px">Mode</div>
+    <div class="mode-grid" id="mode-grid">
+      <div class="mc sel" data-mode="ten" onclick="selMode(this)"><div class="mc-icon">🌊</div><div class="mc-name">10 questions</div><div class="mc-desc">Get your toes wet</div></div>
+      <div class="mc" data-mode="quick" onclick="selMode(this)"><div class="mc-icon">⚡</div><div class="mc-name">Quick drill</div><div class="mc-desc">20 random questions</div></div>
+      <div class="mc" data-mode="section" onclick="selMode(this)"><div class="mc-icon">🎯</div><div class="mc-name">By chapter</div><div class="mc-desc">Pick your chapters</div></div>
+      <div class="mc" data-mode="full" onclick="selMode(this)"><div class="mc-icon">📚</div><div class="mc-name">Full bank</div><div class="mc-desc">Every matching question</div></div>
+    </div>
+
+    <div id="section-picker" style="display:none">
+      <div class="label" style="margin-bottom:8px">Chapters</div>
+      <div class="spills" id="section-pills"></div>
+    </div>
+
+    <div class="label" style="margin-bottom:8px">Type</div>
+    <div class="type-toggle">
+      <div class="tt-btn sel" data-type="exam" onclick="selType(this)">📝 Exam</div>
+      <div class="tt-btn" data-type="learn" onclick="selType(this)">📖 Learning</div>
+      <div class="tt-btn" data-type="both" onclick="selType(this)">🔀 Both</div>
+    </div>
+
+    <div class="label" style="margin-bottom:8px">Difficulty</div>
+    <div class="diff-row">
+      <button class="dp sel-all" data-d="All" onclick="selDiff(this)">All</button>
+      <button class="dp" data-d="Easy" onclick="selDiff(this)">Easy</button>
+      <button class="dp" data-d="Medium" onclick="selDiff(this)">Medium</button>
+      <button class="dp" data-d="Hard" onclick="selDiff(this)">Hard</button>
+    </div>
+
+    <button class="btn btn-acc" onclick="startGame()">▶  Start quiz</button>
+
+    <div class="prog-section">
+      <div class="ps-header">
+        <div class="label">Your progress by chapter</div>
+        <button class="muted" style="font-size:12px" onclick="clearProgress()">Reset</button>
+      </div>
+      <div id="progress-tracker"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="quiz">
+    <div class="quiz-top">
+      <button class="btn-icon" onclick="confirmQuit()" aria-label="Quit">✕</button>
+      <div class="prog-track"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+      <div class="qcount" id="qcount">0 / 0</div>
+    </div>
+    <div class="hud">
+      <div class="hbox"><div class="hbox-n" id="hud-score">0</div><div class="hbox-l">Score</div></div>
+      <div class="hbox"><div class="hbox-n" id="hud-streak">0</div><div class="hbox-l">Streak</div></div>
+      <div class="hbox"><div class="hbox-n" id="hud-left">0</div><div class="hbox-l">Left</div></div>
+    </div>
+    <div class="q-meta" id="q-meta"></div>
+    <div class="q-card"><div class="q-text" id="q-text"></div></div>
+    <div id="answer-area"></div>
+    <div id="exp-area"></div>
+    <div id="next-area"></div>
+  </div>
+
+  <div class="screen" id="results">
+    <div class="results-hero">
+      <div class="r-grade" id="r-grade">A</div>
+      <div class="r-sub" id="r-sub">0 / 0 correct</div>
+      <div class="r-msg" id="r-msg"></div>
+    </div>
+    <div class="r-grid">
+      <div class="r-box"><div class="r-n" id="r-correct">0</div><div class="r-l">Correct</div></div>
+      <div class="r-box"><div class="r-n" id="r-wrong">0</div><div class="r-l">Wrong</div></div>
+      <div class="r-box"><div class="r-n" id="r-streak">0</div><div class="r-l">Best streak</div></div>
+      <div class="r-box"><div class="r-n" id="r-pct">0%</div><div class="r-l">Accuracy</div></div>
+    </div>
+    <div class="label" style="margin-bottom:8px">Performance by chapter</div>
+    <div id="chapter-report"></div>
+    <div class="gapl"></div>
+    <div class="label" style="margin-bottom:8px">Answer review</div>
+    <div id="review-list"></div>
+    <div class="action-row">
+      <button class="btn btn-ghost" onclick="showScreen('home')">← Menu</button>
+      <button class="btn btn-acc" onclick="startGame()">Play again</button>
+    </div>
+  </div>
+</div>
+
+<div class="tab" id="tab-cs">
+  <div class="cs-wrap">
+    <div class="label" style="margin-bottom:10px">Chapter</div>
+    <div class="ch-switcher" id="cs-switcher"></div>
+    <div id="cs-content"></div>
+  </div>
+</div>
+
+<div class="tab" id="tab-sum">
+  <div class="sum-wrap">
+    <div class="label" style="margin-bottom:10px">Chapter</div>
+    <div class="ch-switcher" id="sum-switcher"></div>
+    <div id="sum-content"></div>
+  </div>
+</div>
+
+<div class="tab" id="tab-wr">
+  <div class="wr-wrap">
+    <div class="label" style="margin-bottom:6px">Writing question practice</div>
+    <div class="muted" style="margin-bottom:12px">The exam has one writing question. Tap a prompt to see a model answer outline, key terms and a tip.</div>
+    <div id="wr-list"></div>
+  </div>
+</div>
+
+<div class="overlay" id="quit-overlay">
+  <div class="overlay-box">
+    <h3>Quit quiz?</h3>
+    <p>Your progress in this round will be lost.</p>
+    <div class="ov-row">
+      <button class="btn btn-ghost btn-sm" onclick="closeQuit()">Keep going</button>
+      <button class="btn btn-acc btn-sm" onclick="doQuit()">Quit</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+</div>
+
+<script src="questions1.js"></script>
+<script src="questions2.js"></script>
+<script src="questions3.js"></script>
+<script src="questions4.js"></script>
+<script src="data.js"></script>
+<script src="writing.js"></script>
+<script>
+const Q = [...AIBC_Q1, ...AIBC_Q2, ...AIBC_Q3, ...AIBC_Q4];
+const SECTIONS = AIBC_SECTIONS;
+const CONCEPTS = AIBC_CONCEPTS;
+const ACRONYMS = AIBC_ACRONYMS;
+const CHAPTER_SUMMARIES = AIBC_CHAPTER_SUMMARIES;
+const WRITING = AIBC_WRITING;
+const STORE_KEY = 'aibc_progress';
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ══ STATE ══
+let mode="ten", qtype="exam", diff="All";
+let selSections=new Set(Object.keys(SECTIONS));
+let gameQ=[],idx=0,score=0,streak=0,bestStreak=0,answers=[];
+let multiSel=new Set();
+let progress={};
+
+// ══ INIT ══
+function init(){
+  loadProgress();
+  const nExam=Q.filter(q=>!q.learn).length, nLearn=Q.length-nExam;
+  document.getElementById('home-sub').textContent=Q.length+' questions · '+nExam+' exam · '+nLearn+' learning';
+  document.getElementById('home-total').textContent=Q.length;
+  document.getElementById('home-secs').textContent=Object.keys(SECTIONS).length;
+  buildPills();buildCheatSheet();buildSummary();buildWriting();renderProgressTracker();
+  document.getElementById('home-done').textContent=totalAnswered();
+}
+function totalAnswered(){return Object.values(progress).reduce((s,v)=>s+(v.total||0),0)}
+
+// ══ TABS ══
+function switchTab(id,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tbb').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');btn.classList.add('active');
+}
+
+// ══ HOME CONTROLS ══
+function selMode(el){
+  document.querySelectorAll('.mc').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');mode=el.dataset.mode;
+  document.getElementById('section-picker').style.display=mode==='section'?'block':'none';
+}
+function selType(el){
+  document.querySelectorAll('.tt-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');qtype=el.dataset.type;
+}
+function selDiff(el){
+  document.querySelectorAll('.dp').forEach(b=>b.classList.remove('sel-all','sel-easy','sel-med','sel-hard'));
+  diff=el.dataset.d;
+  el.classList.add({All:'sel-all',Easy:'sel-easy',Medium:'sel-med',Hard:'sel-hard'}[diff]);
+}
+function buildPills(){
+  const el=document.getElementById('section-pills');
+  Object.entries(SECTIONS).forEach(([k,v])=>{
+    const p=document.createElement('button');
+    p.className='spill sel';p.textContent=v;p.dataset.s=k;
+    p.onclick=()=>{p.classList.toggle('sel');if(p.classList.contains('sel'))selSections.add(k);else selSections.delete(k)};
+    el.appendChild(p);
+  });
+}
+
+// ══ GAME FLOW ══
+function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+function startGame(preselect){
+  if(preselect){
+    selSections=new Set(preselect);
+    document.querySelectorAll('.mc').forEach(c=>c.classList.remove('sel'));
+    document.querySelector('[data-mode="section"]').classList.add('sel');
+    mode='section';
+    document.getElementById('section-picker').style.display='block';
+    document.querySelectorAll('.spill').forEach(p=>{p.classList.toggle('sel',selSections.has(p.dataset.s))});
+  }
+  let pool=Q.slice();
+  if(mode==='section') pool=pool.filter(q=>selSections.has(q.s));
+  if(diff!=='All') pool=pool.filter(q=>q.d===diff);
+  if(qtype==='learn') pool=pool.filter(q=>q.learn===true);
+  else if(qtype==='exam') pool=pool.filter(q=>!q.learn);
+  pool=shuffle(pool);
+  if(mode==='ten') pool=pool.slice(0,10);
+  else if(mode==='quick') pool=pool.slice(0,20);
+  if(!pool.length){alert('No questions match your filters.');return}
+  gameQ=pool;idx=0;score=0;streak=0;bestStreak=0;answers=[];
+  showScreen('quiz');renderQ();
+}
+
+function renderQ(){
+  if(idx>=gameQ.length){showResults();return}
+  const q=gameQ[idx];
+  document.getElementById('prog').style.width=Math.round(idx/gameQ.length*100)+'%';
+  document.getElementById('qcount').textContent=(idx+1)+' / '+gameQ.length;
+  document.getElementById('hud-score').textContent=score;
+  document.getElementById('hud-streak').textContent=streak;
+  document.getElementById('hud-left').textContent=gameQ.length-idx;
+  const dC={Easy:'chip-easy',Medium:'chip-med',Hard:'chip-hard'}[q.d];
+  const tL={TF:'True / False',MCQ:'Multiple choice',MULTI:'Multi-select'}[q.t];
+  document.getElementById('q-meta').innerHTML=
+    `<span class="chip ${dC}">${q.d}</span><span class="chip chip-type">${tL}</span><span class="chip chip-sec">${esc(SECTIONS[q.s]||q.s)}</span>`+(q.learn?'<span class="chip chip-learn">Learning</span>':'');
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('exp-area').innerHTML='';
+  document.getElementById('next-area').innerHTML='';
+  multiSel.clear();
+  const area=document.getElementById('answer-area');
+  if(q.t==='TF'){
+    area.innerHTML=`<div class="tf-row"><button class="tf-btn" onclick="answerTF('TRUE',this)">True</button><button class="tf-btn" onclick="answerTF('FALSE',this)">False</button></div>`;
+  } else if(q.t==='MCQ'){
+    area.innerHTML='<div class="opts">'+q.o.map((o,i)=>`<button class="opt" onclick="answerMCQ('${String.fromCharCode(65+i)}',this)">${esc(o)}</button>`).join('')+'</div>';
+  } else {
+    area.innerHTML=`<div class="mhint">Select all correct answers, then tap Submit</div><div class="opts">${q.o.map((o,i)=>`<button class="opt" data-val="${String.fromCharCode(65+i)}" onclick="toggleMulti('${String.fromCharCode(65+i)}',this)">${esc(o)}</button>`).join('')}</div><button class="btn btn-acc" id="msub" style="opacity:.4;pointer-events:none" onclick="submitMulti()">Submit answer</button><div class="gap"></div>`;
+  }
+}
+
+function answerTF(val,btn){
+  const q=gameQ[idx];const ok=val===q.a;
+  document.querySelectorAll('.tf-btn').forEach(b=>{b.classList.add('disabled');if(b.textContent.toUpperCase()===q.a)b.classList.add('correct');else if(b===btn&&!ok)b.classList.add('wrong')});
+  resolve(ok,q,val);idx++;renderNext();
+}
+function answerMCQ(val,btn){
+  const q=gameQ[idx];const ok=val===q.a;
+  document.querySelectorAll('.opt').forEach(b=>{b.classList.add('disabled');if(b.textContent.trim().charAt(0)===q.a)b.classList.add('correct');else if(b===btn&&!ok)b.classList.add('wrong')});
+  resolve(ok,q,val);idx++;renderNext();
+}
+function toggleMulti(val,btn){
+  if(multiSel.has(val)){multiSel.delete(val);btn.classList.remove('selected')}else{multiSel.add(val);btn.classList.add('selected')}
+  const s=document.getElementById('msub');s.style.opacity=multiSel.size>0?'1':'.4';s.style.pointerEvents=multiSel.size>0?'auto':'none';
+}
+function submitMulti(){
+  const q=gameQ[idx];
+  const cs=new Set(q.a.split(', ').map(s=>s.trim()));const us=new Set(Array.from(multiSel));
+  const ok=cs.size===us.size&&[...cs].every(v=>us.has(v));
+  document.querySelectorAll('.opt').forEach(b=>{b.classList.add('disabled');const bv=b.dataset.val;if(cs.has(bv))b.classList.add('correct');else if(us.has(bv))b.classList.add('wrong')});
+  document.getElementById('msub').style.display='none';
+  resolve(ok,q,[...us].sort().join(', '));idx++;renderNext();
+}
+
+function resolve(ok,q,userAns){
+  score+=ok?10:0;streak=ok?streak+1:0;bestStreak=Math.max(bestStreak,streak);
+  if(ok&&streak>1)showToast('🔥 '+streak+' in a row!');
+  answers.push({s:q.s,d:q.d,q:q.q,your:userAns||'—',correct:q.a,ok,exp:q.e});
+  updateProgress(q.s,ok);
+  showRichExp(ok,q);
+  document.getElementById('hud-score').textContent=score;
+  document.getElementById('hud-streak').textContent=streak;
+}
+
+function showRichExp(ok,q){
+  const concept=(CONCEPTS[q.s]||'');
+  const firstSentence=concept?concept.split(/(?<=\.)\s/)[0]:'';
+  let optList='';
+  if(q.o&&q.o.length){
+    const cs=new Set(q.a.split(', ').map(s=>s.trim()));
+    optList='<div class="exp-opts-list"><div class="exp-options-label">Options</div>'+q.o.map((o,i)=>{
+      const L=String.fromCharCode(65+i),c=cs.has(L);
+      return `<div class="exp-opt-row"><div class="exp-opt-badge ${c?'exp-ok-badge':'exp-bad-badge'}">${c?'✓':'✗'}</div><div class="exp-opt-text" style="color:${c?'var(--green)':'var(--muted)'}">${esc(o)}</div></div>`;
+    }).join('')+'</div>';
+  }
+  document.getElementById('exp-area').innerHTML=`
+    <div class="exp-box">
+      <div class="exp-verdict ${ok?'ok':'bad'}">${ok?'✓ Correct':'✗ Incorrect'}</div>
+      ${firstSentence?`<div class="exp-concept"><div class="exp-concept-label">Key concept · ${esc(SECTIONS[q.s]||q.s)}</div><div class="exp-concept-text">${esc(firstSentence)}</div></div>`:''}
+      <div class="exp-answer"><div class="exp-answer-label">Correct answer &amp; why</div>
+        <div class="exp-answer-text"><strong>Answer: ${esc(q.a)}</strong><br>${esc(q.e)}</div></div>
+      ${optList}
+    </div>`;
+}
+function renderNext(){
+  const last=idx>=gameQ.length;
+  document.getElementById('next-area').innerHTML=`<button class="btn btn-acc" onclick="renderQ()">${last?'See results →':'Next →'}</button>`;
+}
+
+// ══ RESULTS ══
+function showResults(){
+  showScreen('results');
+  const total=answers.length,correct=answers.filter(a=>a.ok).length;
+  const pct=total?Math.round(correct/total*100):0;
+  const grade=pct>=90?'A+':pct>=80?'A':pct>=70?'B':pct>=60?'C':pct>=50?'D':'F';
+  const msgs={'A+':'Perfect! Exam ready.','A':'Excellent work!','B':'Great — almost there!','C':'Good progress. Keep reviewing.','D':'Keep studying — you can do it.','F':'More practice needed.'};
+  document.getElementById('r-grade').textContent=grade;
+  document.getElementById('r-sub').textContent=`${correct} / ${total} correct`;
+  document.getElementById('r-msg').textContent=msgs[grade];
+  document.getElementById('r-correct').textContent=correct;
+  document.getElementById('r-wrong').textContent=total-correct;
+  document.getElementById('r-streak').textContent=bestStreak;
+  document.getElementById('r-pct').textContent=pct+'%';
+  buildChapterReport();buildReviewList();renderProgressTracker();
+  document.getElementById('home-done').textContent=totalAnswered();
+}
+function buildChapterReport(){
+  const stats={};
+  answers.forEach(a=>{if(!stats[a.s])stats[a.s]={total:0,correct:0};stats[a.s].total++;if(a.ok)stats[a.s].correct++});
+  const sorted=Object.entries(stats).sort((a,b)=>(a[1].correct/a[1].total)-(b[1].correct/b[1].total));
+  const el=document.getElementById('chapter-report');
+  if(!sorted.length){el.innerHTML='';return}
+  const weak=sorted.filter(([,v])=>v.correct/v.total<0.6);
+  let html='';
+  if(weak.length){
+    html+=`<div style="background:var(--rsoft);border:1px solid var(--rborder);border-radius:var(--r);padding:13px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:5px">Chapters to study</div>
+      <div style="font-size:12px;color:#f0a0a8;line-height:1.6;margin-bottom:8px">${weak.map(([s])=>esc(SECTIONS[s]||s)).join(' · ')}</div>
+      <button class="study-btn" onclick="drillWeak(${esc(JSON.stringify(weak.map(([s])=>s)))})">→ Drill these chapters now</button>
+    </div>`;
+  } else {
+    html+=`<div style="background:var(--gsoft);border:1px solid var(--gborder);border-radius:var(--r);padding:13px;margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:var(--green)">Strong performance across all chapters</div></div>`;
+  }
+  sorted.forEach(([s,v])=>{
+    const p=Math.round(v.correct/v.total*100);
+    const bc=p>=70?'var(--green)':p>=50?'var(--amber)':'var(--red)';
+    html+=`<div class="cr-item ${p<60?'cr-need':'cr-ok'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div class="cr-title">${esc(SECTIONS[s]||s)}</div><div class="cr-meta">${v.correct} / ${v.total} correct</div></div>
+        <span style="font-size:14px;font-weight:700;color:${bc}">${p}%</span>
+      </div>
+      <div class="cr-bar-wrap"><div class="cr-bar" style="width:${p}%;background:${bc}"></div></div>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+function drillWeak(sections){showScreen('home');startGame(sections)}
+function buildReviewList(){
+  document.getElementById('review-list').innerHTML=answers.map((a,i)=>`
+    <div class="rev-item">
+      <div class="rev-head" onclick="toggleRev(${i})">
+        <div class="r-icon ${a.ok?'ri-ok':'ri-bad'}">${a.ok?'✓':'✗'}</div>
+        <div class="r-qtext">${esc(a.q)}</div>
+      </div>
+      <div class="rev-body" id="rv${i}">
+        <div class="rev-correct">Correct: ${esc(a.correct)}</div>
+        ${!a.ok?`<div class="rev-yours">Your answer: ${esc(a.your)}</div>`:''}
+        ${esc(a.exp)}
+      </div>
+    </div>`).join('');
+}
+function toggleRev(i){document.getElementById('rv'+i).classList.toggle('open')}
+
+// ══ PROGRESS ══
+function loadProgress(){try{progress=JSON.parse(localStorage.getItem(STORE_KEY)||'{}')}catch(e){progress={}}}
+function saveProgress(){try{localStorage.setItem(STORE_KEY,JSON.stringify(progress))}catch(e){}}
+function updateProgress(section,ok){
+  if(!progress[section])progress[section]={total:0,correct:0};
+  progress[section].total++;if(ok)progress[section].correct++;saveProgress();
+}
+function clearProgress(){
+  if(!confirm('Reset all chapter progress?'))return;
+  progress={};saveProgress();renderProgressTracker();
+  document.getElementById('home-done').textContent=0;
+}
+function renderProgressTracker(){
+  const el=document.getElementById('progress-tracker');
+  el.innerHTML=Object.entries(SECTIONS).map(([s,name])=>{
+    const p=progress[s]||{total:0,correct:0};
+    if(p.total===0){
+      return `<div class="ps-item"><div class="ps-top"><div class="ps-name">${esc(name)}</div><span class="muted" style="font-size:11px">Not started</span></div><div class="ps-bar"><div class="ps-fill" style="width:0%;background:var(--muted2)"></div></div></div>`;
+    }
+    const pct=Math.round(p.correct/p.total*100);
+    const bc=pct>=70?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
+    return `<div class="ps-item"><div class="ps-top"><div class="ps-name">${esc(name)}</div><div class="ps-pct" style="color:${bc}">${pct}%</div></div><div class="ps-bar"><div class="ps-fill" style="width:${pct}%;background:${bc}"></div></div><div class="ps-meta">${p.correct} / ${p.total} correct across all sessions</div></div>`;
+  }).join('');
+}
+
+// ══ CHEAT SHEET ══
+const FORMULAS=[
+  ['TCO','Initial costs + Recurring costs – Remaining value','Lower = less costly','Ignores benefits'],
+  ['ROI','(Benefits – Cost) / Cost × 100','> 0%; higher is better','Ignores time value'],
+  ['PBP','Cost of investment / Average annual cash flow','Shorter is better','Does not compare benefits and costs'],
+  ['NPV','Σ Cn/(1+r)^n – Initial investment','Positive = pursue','An amount; no recovery period'],
+  ['IRR','Rate at which NPV = 0','> discount rate r; higher is better','A rate; no recovery period']
+];
+function buildCheatSheet(){
+  const sw=document.getElementById('cs-switcher');
+  sw.innerHTML='<button class="ch-btn sel" data-s="fx" onclick="selCS(\'fx\',this)">Formulas</button>'+
+    CHAPTER_SUMMARIES.map(c=>`<button class="ch-btn" data-s="${c.id}" onclick="selCS('${c.id}',this)">${esc(SECTIONS[c.id]||c.title)}</button>`).join('')+
+    '<button class="ch-btn" data-s="acro" onclick="selCS(\'acro\',this)">Acronyms</button>';
+  renderCS('fx');
+}
+function selCS(s,btn){
+  document.querySelectorAll('#cs-switcher .ch-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');renderCS(s);
+}
+function renderCS(s){
+  const el=document.getElementById('cs-content');
+  if(s==='fx'){
+    el.innerHTML=`<div class="cs-section"><div class="cs-sec-label">The five financial KPIs</div>
+      <div class="cs-card"><table class="fx-table"><tr><th>KPI</th><th>Formula</th><th>Rule</th><th>Limit</th></tr>
+      ${FORMULAS.map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td></tr>`).join('')}</table></div>
+      <div class="cs-card"><div class="cs-card-title">Simple vs advanced</div><ul class="cs-bullets">
+        <li><strong>Simple (no time value):</strong> TCO, ROI, PBP</li><li><strong>Advanced (discounted):</strong> NPV, IRR</li>
+        <li><strong>Discount rate:</strong> 10% default; 9.5–10.5% low risk, 10.5–12.5% core strategic, 12.5–14.5%+ high risk</li>
+        <li><strong>Slide examples:</strong> TCO €17,000 · ROI 75% · PBP 3.2 years</li></ul></div>
+      <div class="cs-card"><div class="cs-card-title">Four value-driver pillars</div><ul class="cs-bullets">
+        <li><strong>Top line:</strong> revenue growth</li><li><strong>Bottom line:</strong> net income after all expenses</li>
+        <li><strong>Green line:</strong> conservation of natural resources</li><li><strong>Strategic and transformational:</strong> long-term viability</li></ul></div></div>`;
+    return;
+  }
+  if(s==='acro'){
+    el.innerHTML='<div class="cs-section"><div class="cs-sec-label">Key acronyms &amp; definitions</div>'+
+      ACRONYMS.map(a=>`<div class="acro-card"><div class="acro-abbr">${esc(a.a)}</div><div><div class="acro-full">${esc(a.f)}</div><div class="acro-def">${esc(a.d)}</div></div></div>`).join('')+'</div>';
+    return;
+  }
+  const chap=CHAPTER_SUMMARIES.find(c=>c.id===s);
+  if(!chap){el.innerHTML='';return}
+  el.innerHTML=`<div class="cs-section"><div class="cs-sec-label">${esc(chap.label)}</div><div class="cs-card"><div class="cs-card-title">${esc(chap.title)}</div>
+    <ul class="cs-bullets">${chap.keyPoints.map(p=>`<li><strong>${esc(p.t)}:</strong> ${esc(p.b)}</li>`).join('')}</ul></div></div>`;
+}
+
+// ══ SUMMARY ══
+function buildSummary(){
+  const sw=document.getElementById('sum-switcher');
+  sw.innerHTML=CHAPTER_SUMMARIES.map((c,i)=>`<button class="ch-btn${i===0?' sel':''}" onclick="selSum('${c.id}',this)">${esc(c.title)}</button>`).join('');
+  renderSum(CHAPTER_SUMMARIES[0].id);
+}
+function selSum(s,btn){
+  document.querySelectorAll('#sum-switcher .ch-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');renderSum(s);
+}
+function renderSum(s){
+  const chap=CHAPTER_SUMMARIES.find(c=>c.id===s);
+  const el=document.getElementById('sum-content');
+  if(!chap){el.innerHTML='';return}
+  el.innerHTML=`<div class="sum-card"><div class="sum-session">${esc(chap.label)}</div><div class="sum-title">${esc(chap.title)}</div>
+    ${chap.keyPoints.map(p=>`<div class="sum-point"><div class="sum-pt">${esc(p.t)}</div><div class="sum-pb">${esc(p.b)}</div></div>`).join('')}</div>`;
+}
+
+// ══ WRITING ══
+function buildWriting(){
+  document.getElementById('wr-list').innerHTML=WRITING.map((w,i)=>`
+    <div class="wr-item">
+      <div class="wr-head" onclick="toggleWr(${i})"><div class="wr-num">${i+1}</div><div><div class="wr-title">${esc(w.title)}</div><div class="wr-meta">${esc(w.minutes)}</div></div></div>
+      <div class="wr-body" id="wr${i}">
+        <div class="wr-prompt">${esc(w.prompt)}</div>
+        ${w.outline.map(o=>`<div class="wr-h">${esc(o.h)}</div><ul>${o.pts.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>`).join('')}
+        <div class="wr-h">Key terms to use</div><div class="wr-terms">${w.keyTerms.map(t=>`<span class="wr-term">${esc(t)}</span>`).join('')}</div>
+        <div class="wr-tip">Tip: ${esc(w.tip)}</div>
+      </div>
+    </div>`).join('');
+}
+function toggleWr(i){document.getElementById('wr'+i).classList.toggle('open')}
+
+// ══ NAVIGATION ══
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('tab-q').scrollTop=0;
+}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+function confirmQuit(){document.getElementById('quit-overlay').classList.add('show')}
+function closeQuit(){document.getElementById('quit-overlay').classList.remove('show')}
+function doQuit(){closeQuit();showScreen('home')}
+
+init();
+</script>
+</body>
+</html>
