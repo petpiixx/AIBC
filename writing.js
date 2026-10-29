@@ -41,10 +41,10 @@ const AIBC_WRITING = [
    {h:"Definitions with KPIs", pts:["Top line: revenue growth (revenue from new products, less loss from stock-outs).","Bottom line: net income after all expenses (days in inventory, logistics cost, DSO).","Green line: conservation of natural resources (energy cost, carbon footprint).","Strategic and transformational: long-term viability (customer satisfaction, on-time delivery, employee engagement)."]},
    {h:"Benchmarks", pts:["SAP benchmark of 26 industries gives average improvement ranges, e.g. 3–10% energy cost, 15–40% customer satisfaction."]},
    {h:"From soft to hard", pts:["Impact area → value driver → KPI → baseline → improvement % → financial benefit; strategic benefits are not quantified financially.","Hard benefits are ROI, IRR, TCO, NPV and PBP computed from costs and the quantified benefits."]},
-   {h:"Example", pts:["ProFoods: 20% less carbon and 5% more EBIT = AED 126M; logistics network 5–20% operating cost reduction."]}
+   {h:"Example", pts:["A logistics project cuts transport cost (bottom line) and fuel use (green line); each pillar gets a KPI, a baseline and an owner."]}
   ],
   keyTerms:["baseline","improvement %","benchmark","KPI","soft vs hard"],
-  tip:"Give one KPI and one benchmark number per pillar."},
+  tip:"Give one KPI and one example per pillar."},
  {title:"Explain BTM² and the role of Value and Risk Management",
   minutes:"about 10–15 min",
   prompt:"Describe SAP's BTM² methodology and where the business case sits within it.",
@@ -66,16 +66,5 @@ const AIBC_WRITING = [
    {h:"Common thread", pts:["Same numbers, different lens. A business case should be ambitious, collaborative, specific, persona-relevant and realistic."]}
   ],
   keyTerms:["persona","KPI ownership","TCO","NPV","ESG"],
-  tip:"Use ProFoods (CFO NPV, CIO TCO, COO downtime, CSCO stock-outs, CRO revenue) as your example."},
- {title:"Apply the course to the Navigator PM1 project: justify and challenge",
-  minutes:"about 15–20 min",
-  prompt:"The Navigator group proposes 18 IFM sensors on PM1 for 310 k€. Justify the investment with the course KPIs and discuss its limitations.",
-  outline:[
-   {h:"Justification", pts:["CAPEX 310.3 k€ (97% implementation), OPEX 91.1 k€/yr, TCO 801.7 k€.","Benefits 1,038.3 k€/yr: top line 738.3 (sheet breaks), bottom line 200.0 (maintenance), green line 100.0 (energy and broke).","At 10%: NPV 3,244 k€, IRR 273% (> 10%), ROI 548%, payback 0.37 years."]},
-   {h:"Robustness", pts:["Break-even: benefits can fall 82%. Without extra tonnes NPV is still 446 k€. CAPEX +20% gives 3,182; 12% rate gives 3,068."]},
-   {h:"Challenges", pts:["About 70% of the benefit comes from sheet breaks and paper price (UWF price fell 9% in 2025).","Maintenance saving of 10% is well above the 0.5–3% asset-maintenance benchmark for Paper & Packaging.","Flat five-year flows, no tax or ramp-up; baselines are estimates to validate with mill data."]},
-   {h:"Governance and risk", pts:["14-month gated roadmap reviewed by the AI Governance Steering Committee; risks: OT cybersecurity, model drift, harsh environment, change resistance, each with a mitigation."]}
-  ],
-  keyTerms:["NPV","IRR > r","sensitivity","benchmark","baseline","limitations"],
-  tip:"Numbers first, then critique; show you can question your own assumptions."}
+  tip:"Use the persona logic (CFO NPV, CIO TCO, COO downtime, CSCO stock-outs, CRO revenue) as your example."}
 ];
